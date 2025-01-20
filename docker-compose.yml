@@ -1,0 +1,53 @@
+version: '3.8'
+
+services:
+  consul:
+    image: consul:1.10.0 # Utilisez l'image Consul version 1.10.0
+    ports:
+      - "8500:8500"
+    command: agent -dev -ui
+    networks:
+      - app-network
+
+  client:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+    ports:
+      - "8088:8088"
+    depends_on:
+      - consul
+    networks:
+      - app-network
+    environment:
+      - CONSUL_port=consul
+
+  voiture:
+    build:
+      context: ./voiture
+      dockerfile: Dockerfile
+    ports:
+      - "8089:8089"
+    depends_on:
+      - consul
+    networks:
+      - app-network
+    environment:
+      - CONSUL_SERVER=http://consul:8500
+
+  gateway:
+    build:
+      context: ./gateway
+      dockerfile: Dockerfile
+    ports:
+      - "8888:8888"
+    depends_on:
+      - consul
+    networks:
+      - app-network
+    environment:
+      - CONSUL_SERVER=http://consul:8500
+
+networks:
+  app-network:
+    driver: bridge
